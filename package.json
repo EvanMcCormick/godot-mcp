@@ -1,7 +1,7 @@
 {
   "name": "godot-mcp",
-  "version": "0.1.0",
-  "description": "MCP server for interfacing with Godot game engine. Provides tools for launching the editor, running projects, and capturing debug output.",
+  "version": "0.2.0",
+  "description": "MCP server for interfacing with Godot game engine. Provides tools for launching the editor, running projects, and capturing debug output. Compatible with Godot 4.4+ and fully supports Godot 4.5.",
   "type": "module",
   "bin": {
     "godot-mcp": "./build/index.js"
@@ -27,7 +27,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Coding-Solo/godot-mcp.git"
+    "url": "https://github.com/EvanMcCormick/godot-mcp.git"
   },
   "keywords": [
     "godot",

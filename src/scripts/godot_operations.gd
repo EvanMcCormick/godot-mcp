@@ -46,144 +46,9 @@ func _init():
     if error == OK:
         params = json.get_data()
     else:
-        log_error("Failed to parse JSON parameters: " + params_json)
-        log_error("JSON Error: " + json.get_error_message() + " at line " + str(json.get_error_line()))
-        quit(1)
-    
-    if not params:
-        log_error("Failed to parse JSON parameters: " + params_json)
-        quit(1)
-    
-    log_info("Executing operation: " + operation)
-    
-    match operation:
-        "create_scene":
-            create_scene(params)
-        "add_node":
-            add_node(params)
-        "load_sprite":
-            load_sprite(params)
-        "export_mesh_library":
-            export_mesh_library(params)
-        "save_scene":
-            save_scene(params)
-        "get_uid":
-            get_uid(params)
-        "resave_resources":
-            resave_resources(params)
-        _:
-            log_error("Unknown operation: " + operation)
-            quit(1)
-    
-    quit()
-
-# Logging functions
-func log_debug(message):
-    if debug_mode:
-        print("[DEBUG] " + message)
-
-func log_info(message):
-    print("[INFO] " + message)
-
-func log_error(message):
-    printerr("[ERROR] " + message)
-
-# Get a script by name or path
-func get_script_by_name(name_of_class):
-    if debug_mode:
-        print("Attempting to get script for class: " + name_of_class)
-    
-    # Try to load it directly if it's a resource path
-    if ResourceLoader.exists(name_of_class, "Script"):
-        if debug_mode:
-            print("Resource exists, loading directly: " + name_of_class)
-        var script = load(name_of_class) as Script
-        if script:
-            if debug_mode:
-                print("Successfully loaded script from path")
-            return script
-        else:
-            printerr("Failed to load script from path: " + name_of_class)
-    elif debug_mode:
-        print("Resource not found, checking global class registry")
-    
-    # Search for it in the global class registry if it's a class name
-    var global_classes = ProjectSettings.get_global_class_list()
-    if debug_mode:
-        print("Searching through " + str(global_classes.size()) + " global classes")
-    
-    for global_class in global_classes:
-        var found_name_of_class = global_class["class"]
-        var found_path = global_class["path"]
-        
-        if found_name_of_class == name_of_class:
-            if debug_mode:
-                print("Found matching class in registry: " + found_name_of_class + " at path: " + found_path)
-            var script = load(found_path) as Script
-            if script:
-                if debug_mode:
-                    print("Successfully loaded script from registry")
-                return script
-            else:
-                printerr("Failed to load script from registry path: " + found_path)
-                break
-    
-    printerr("Could not find script for class: " + name_of_class)
-    return null
-
-# Instantiate a class by name
-func instantiate_class(name_of_class):
-    if name_of_class.is_empty():
-        printerr("Cannot instantiate class: name is empty")
-        return null
-    
-    var result = null
-    if debug_mode:
-        print("Attempting to instantiate class: " + name_of_class)
-    
-    # Check if it's a built-in class
-    if ClassDB.class_exists(name_of_class):
-        if debug_mode:
-            print("Class exists in ClassDB, using ClassDB.instantiate()")
-        if ClassDB.can_instantiate(name_of_class):
-            result = ClassDB.instantiate(name_of_class)
-            if result == null:
-                printerr("ClassDB.instantiate() returned null for class: " + name_of_class)
-        else:
-            printerr("Class exists but cannot be instantiated: " + name_of_class)
-            printerr("This may be an abstract class or interface that cannot be directly instantiated")
-    else:
-        # Try to get the script
-        if debug_mode:
-            print("Class not found in ClassDB, trying to get script")
-        var script = get_script_by_name(name_of_class)
-        if script is GDScript:
-            if debug_mode:
-                print("Found GDScript, creating instance")
-            result = script.new()
-        else:
-            printerr("Failed to get script for class: " + name_of_class)
-            return null
-    
-    if result == null:
-        printerr("Failed to instantiate class: " + name_of_class)
-    elif debug_mode:
-        print("Successfully instantiated class: " + name_of_class + " of type: " + result.get_class())
-    
-    return result
-
-# Create a new scene with a specified root node type
-func create_scene(params):
-    print("Creating scene: " + params.scene_path)
-    
-    # Get project paths and log them for debugging
-    var project_res_path = "res://"
-    var project_user_path = "user://"
-    var global_res_path = ProjectSettings.globalize_path(project_res_path)
-    var global_user_path = ProjectSettings.globalize_path(project_user_path)
-    
-    if debug_mode:
-        print("Project paths:")
+        # Implemented in module 'modules/audio_bus_layout_audit.gd'.
+        # This placeholder remains for dispatcher compatibility if build concatenation fails.
+        printerr("audio_bus_layout_audit module not inlined; ensure build concatenation step executed.")
         print("- res:// path: " + project_res_path)
         print("- user:// path: " + project_user_path)
         print("- Globalized res:// path: " + global_res_path)
@@ -1092,8 +957,116 @@ func resave_resources(params):
         print("- UIDs successfully generated: " + str(generated_uids))
     print("Resave operation complete")
 
-# Save changes to a scene file
-func save_scene(params):
+# Duplicate a resource with advanced options (Godot 4.5+)
+func duplicate_resource_advanced(params):
+    print("Advanced resource duplication: " + params.resource_path)
+    
+    # Ensure the resource path starts with res:// for Godot's resource system
+    var full_resource_path = params.resource_path
+    if not full_resource_path.begins_with("res://"):
+        full_resource_path = "res://" + full_resource_path
+    
+    if debug_mode:
+        print("Full resource path (with res://): " + full_resource_path)
+    
+    # Check if the resource file exists
+    var file_check = FileAccess.file_exists(full_resource_path)
+    if debug_mode:
+        print("Resource file exists check: " + str(file_check))
+    
+    if not file_check:
+        printerr("Resource file does not exist at: " + full_resource_path)
+        quit(1)
+    
+    # Load the resource
+    if debug_mode:
+        print("Loading resource from: " + full_resource_path)
+    var resource = load(full_resource_path)
+    if not resource:
+        printerr("Failed to load resource: " + full_resource_path)
+        quit(1)
+    
+    if debug_mode:
+        print("Resource loaded successfully")
+    
+    # Determine duplication method and depth
+    var use_deep_duplication = params.get("use_deep_duplication", false)
+    var duplicate_external_resources = params.get("duplicate_external_resources", false)
+    
+    var duplicated_resource = null
+    
+    if use_deep_duplication and duplicate_external_resources:
+        # Use the new duplicate_deep() method with RESOURCE_DEEP_DUPLICATE_ALL for Godot 4.5+
+        if debug_mode:
+            print("Using Resource.duplicate_deep() with RESOURCE_DEEP_DUPLICATE_ALL")
+        duplicated_resource = resource.duplicate_deep(Resource.RESOURCE_DEEP_DUPLICATE_ALL)
+    elif use_deep_duplication:
+        # Use the regular duplicate_deep() method
+        if debug_mode:
+            print("Using Resource.duplicate_deep()")
+        duplicated_resource = resource.duplicate_deep()
+    else:
+        # Use regular duplication
+        if debug_mode:
+            print("Using Resource.duplicate()")
+        duplicated_resource = resource.duplicate()
+    
+    if not duplicated_resource:
+        printerr("Failed to duplicate resource")
+        quit(1)
+    
+    # Determine output path
+    var output_path = params.get("output_path", "")
+    if output_path.is_empty():
+        # Generate a default output path
+        var base_name = full_resource_path.get_base_dir() + "/" + full_resource_path.get_file().get_basename()
+        var extension = full_resource_path.get_extension()
+        output_path = base_name + "_duplicate." + extension
+    elif not output_path.begins_with("res://"):
+        output_path = "res://" + output_path
+    
+    if debug_mode:
+        print("Saving duplicated resource to: " + output_path)
+    
+    # Create directory if it doesn't exist
+    var dir = DirAccess.open("res://")
+    if dir == null:
+        printerr("Failed to open res:// directory")
+        printerr("DirAccess error: " + str(DirAccess.get_open_error()))
+        quit(1)
+        
+    var output_dir = output_path.get_base_dir()
+    if debug_mode:
+        print("Output directory: " + output_dir)
+    
+    if output_dir != "res://" and not dir.dir_exists(output_dir.substr(6)):  # Remove "res://" prefix
+        if debug_mode:
+            print("Creating directory: " + output_dir)
+        var error = dir.make_dir_recursive(output_dir.substr(6))  # Remove "res://" prefix
+        if error != OK:
+            printerr("Failed to create directory: " + output_dir + ", error: " + str(error))
+            quit(1)
+    
+    # Save the duplicated resource
+    var save_error = ResourceSaver.save(duplicated_resource, output_path)
+    if debug_mode:
+        print("Save result: " + str(save_error) + " (OK=" + str(OK) + ")")
+    
+    if save_error == OK:
+        if debug_mode:
+            var file_check_after = FileAccess.file_exists(output_path)
+            print("File exists check after save: " + str(file_check_after))
+            
+            if file_check_after:
+                print("Resource duplicated successfully to: " + output_path)
+                var absolute_path = ProjectSettings.globalize_path(output_path)
+                print("Absolute file path: " + absolute_path)
+            else:
+                printerr("File reported as saved but does not exist at: " + output_path)
+        else:
+            print("Resource duplicated successfully to: " + output_path)
+    else:
+        printerr("Failed to save duplicated resource: " + str(save_error))
     print("Saving scene: " + params.scene_path)
     
     # Ensure the scene path starts with res:// for Godot's resource system
@@ -1102,7 +1075,7 @@ func save_scene(params):
         full_scene_path = "res://" + full_scene_path
     
     if debug_mode:
-        print("Full scene path (with res://): " + full_scene_path)
+               print("Full scene path (with res://): " + full_scene_path)
     
     # Check if the scene file exists
     var file_check = FileAccess.file_exists(full_scene_path)
@@ -1190,3 +1163,497 @@ func save_scene(params):
             printerr("Failed to save scene: " + str(error))
     else:
         printerr("Failed to pack scene: " + str(result))
+
+# Scene smoke test: attempt to load & optionally instantiate every .tscn
+# params: { includePatterns?: ["tscn"], instantiate?: bool, maxScenes?: int }
+# Output categories: passed, load_errors, instantiation_errors, missing_dependencies
+func scene_smoke_test(params: Dictionary) -> void:
+    # Implemented in module 'modules/scene_smoke_test.gd'.
+    # Placeholder retained so dispatcher calls remain valid if build concatenation fails.
+    printerr("scene_smoke_test module not inlined; ensure build concatenation step executed.")
+    var fallback_report = {
+        "passed": [],
+        "load_errors": [],
+        "instantiation_errors": [],
+        "missing_dependencies": [],
+        "summary": {"error": "module_missing"},
+        "engine_version": Engine.get_version_info()
+    }
+    print(JSON.stringify(fallback_report))
+
+# GDScript static audit for style & migration concerns
+# Reports categories: naming, signals, preload, todo, deprecated, classdefs
+# params: { includePatterns?: ["gd"], maxFindingsPerFile?: int }
+func audit_scripts_gd(params: Dictionary) -> void:
+    # Implemented in module 'modules/audit_scripts_gd.gd'.
+    # Placeholder to keep dispatcher stable if build concatenation failed.
+    printerr("audit_scripts_gd module not inlined; ensure build concatenation step executed.")
+    var fallback_report = {
+        "naming": [],
+        "signals": [],
+        "preload": [],
+        "todo": [],
+        "deprecated": [],
+        "classdefs": [],
+        "summary": {"error": "module_missing"},
+        "engine_version": Engine.get_version_info()
+    }
+    print(JSON.stringify(fallback_report))
+
+# Duplicate a resource with advanced options (Godot 4.5+)
+func duplicate_resource_advanced(params):
+    print("Advanced resource duplication: " + params.resource_path)
+    
+    # Ensure the resource path starts with res:// for Godot's resource system
+    var full_resource_path = params.resource_path
+    if not full_resource_path.begins_with("res://"):
+        full_resource_path = "res://" + full_resource_path
+    
+    if debug_mode:
+        print("Full resource path (with res://): " + full_resource_path)
+    
+    # Check if the resource file exists
+    var file_check = FileAccess.file_exists(full_resource_path)
+    if debug_mode:
+        print("Resource file exists check: " + str(file_check))
+    
+    if not file_check:
+        printerr("Resource file does not exist at: " + full_resource_path)
+        quit(1)
+    
+    # Load the resource
+    if debug_mode:
+        print("Loading resource from: " + full_resource_path)
+    var resource = load(full_resource_path)
+    if not resource:
+        printerr("Failed to load resource: " + full_resource_path)
+        quit(1)
+    
+    if debug_mode:
+        print("Resource loaded successfully")
+    
+    # Determine duplication method and depth
+    var use_deep_duplication = params.get("use_deep_duplication", false)
+    var duplicate_external_resources = params.get("duplicate_external_resources", false)
+    
+    var duplicated_resource = null
+    
+    if use_deep_duplication and duplicate_external_resources:
+        # Use the new duplicate_deep() method with RESOURCE_DEEP_DUPLICATE_ALL for Godot 4.5+
+        if debug_mode:
+            print("Using Resource.duplicate_deep() with RESOURCE_DEEP_DUPLICATE_ALL")
+        duplicated_resource = resource.duplicate_deep(Resource.RESOURCE_DEEP_DUPLICATE_ALL)
+    elif use_deep_duplication:
+        # Use the regular duplicate_deep() method
+        if debug_mode:
+            print("Using Resource.duplicate_deep()")
+        duplicated_resource = resource.duplicate_deep()
+    else:
+        # Use regular duplication
+        if debug_mode:
+            print("Using Resource.duplicate()")
+        duplicated_resource = resource.duplicate()
+    
+    if not duplicated_resource:
+        printerr("Failed to duplicate resource")
+        quit(1)
+    
+    # Determine output path
+    var output_path = params.get("output_path", "")
+    if output_path.is_empty():
+        # Generate a default output path
+        var base_name = full_resource_path.get_base_dir() + "/" + full_resource_path.get_file().get_basename()
+        var extension = full_resource_path.get_extension()
+        output_path = base_name + "_duplicate." + extension
+    elif not output_path.begins_with("res://"):
+        output_path = "res://" + output_path
+    
+    if debug_mode:
+        print("Saving duplicated resource to: " + output_path)
+    
+    # Create directory if it doesn't exist
+    var dir = DirAccess.open("res://")
+    if dir == null:
+        printerr("Failed to open res:// directory")
+        printerr("DirAccess error: " + str(DirAccess.get_open_error()))
+        quit(1)
+        
+    var output_dir = output_path.get_base_dir()
+    if debug_mode:
+        print("Output directory: " + output_dir)
+    
+    if output_dir != "res://" and not dir.dir_exists(output_dir.substr(6)):  # Remove "res://" prefix
+        if debug_mode:
+            print("Creating directory: " + output_dir)
+        var error = dir.make_dir_recursive(output_dir.substr(6))  # Remove "res://" prefix
+        if error != OK:
+            printerr("Failed to create directory: " + output_dir + ", error: " + str(error))
+            quit(1)
+    
+    # Save the duplicated resource
+    var save_error = ResourceSaver.save(duplicated_resource, output_path)
+    if debug_mode:
+        print("Save result: " + str(save_error) + " (OK=" + str(OK) + ")")
+    
+    if save_error == OK:
+        if debug_mode:
+            var file_check_after = FileAccess.file_exists(output_path)
+            print("File exists check after save: " + str(file_check_after))
+            
+            if file_check_after:
+                print("Resource duplicated successfully to: " + output_path)
+                var absolute_path = ProjectSettings.globalize_path(output_path)
+                print("Absolute file path: " + absolute_path)
+            else:
+                printerr("File reported as saved but does not exist at: " + output_path)
+        else:
+            print("Resource duplicated successfully to: " + output_path)
+    else:
+        printerr("Failed to save duplicated resource: " + str(save_error))
+    print("Saving scene: " + params.scene_path)
+    
+    # Ensure the scene path starts with res:// for Godot's resource system
+    var full_scene_path = params.scene_path
+    if not full_scene_path.begins_with("res://"):
+        full_scene_path = "res://" + full_scene_path
+    
+    if debug_mode:
+               print("Full scene path (with res://): " + full_scene_path)
+    
+    # Check if the scene file exists
+    var file_check = FileAccess.file_exists(full_scene_path)
+    if debug_mode:
+        print("Scene file exists check: " + str(file_check))
+    
+    if not file_check:
+        printerr("Scene file does not exist at: " + full_scene_path)
+        # Get the absolute path for reference
+        var absolute_path = ProjectSettings.globalize_path(full_scene_path)
+        printerr("Absolute file path that doesn't exist: " + absolute_path)
+        quit(1)
+    
+    # Load the scene
+    var scene = load(full_scene_path)
+    if not scene:
+        printerr("Failed to load scene: " + full_scene_path)
+        quit(1)
+    
+    if debug_mode:
+        print("Scene loaded successfully")
+    
+    # Instance the scene
+    var scene_root = scene.instantiate()
+    if debug_mode:
+        print("Scene instantiated")
+    
+    # Determine save path
+    var save_path = params.new_path if params.has("new_path") else full_scene_path
+    if params.has("new_path") and not save_path.begins_with("res://"):
+        save_path = "res://" + save_path
+    
+    if debug_mode:
+        print("Save path: " + save_path)
+    
+    # Create directory if it doesn't exist
+    if params.has("new_path"):
+        var dir = DirAccess.open("res://")
+        if dir == null:
+            printerr("Failed to open res:// directory")
+            printerr("DirAccess error: " + str(DirAccess.get_open_error()))
+            quit(1)
+            
+        var scene_dir = save_path.get_base_dir()
+        if debug_mode:
+            print("Scene directory: " + scene_dir)
+        
+        if scene_dir != "res://" and not dir.dir_exists(scene_dir.substr(6)):  # Remove "res://" prefix
+            if debug_mode:
+                print("Creating directory: " + scene_dir)
+            var error = dir.make_dir_recursive(scene_dir.substr(6))  # Remove "res://" prefix
+            if error != OK:
+                printerr("Failed to create directory: " + scene_dir + ", error: " + str(error))
+                quit(1)
+    
+    # Create a packed scene
+    var packed_scene = PackedScene.new()
+    var result = packed_scene.pack(scene_root)
+    if debug_mode:
+        print("Pack result: " + str(result) + " (OK=" + str(OK) + ")")
+    
+    if result == OK:
+        if debug_mode:
+            print("Saving scene to: " + save_path)
+        var error = ResourceSaver.save(packed_scene, save_path)
+        if debug_mode:
+            print("Save result: " + str(error) + " (OK=" + str(OK) + ")")
+        
+        if error == OK:
+            # Verify the file was actually created/updated
+            if debug_mode:
+                var file_check_after = FileAccess.file_exists(save_path)
+                print("File exists check after save: " + str(file_check_after))
+                
+                if file_check_after:
+                    print("Scene saved successfully to: " + save_path)
+                    # Get the absolute path for reference
+                    var absolute_path = ProjectSettings.globalize_path(save_path)
+                    print("Absolute file path: " + absolute_path)
+                else:
+                    printerr("File reported as saved but does not exist at: " + save_path)
+            else:
+                print("Scene saved successfully to: " + save_path)
+        else:
+            printerr("Failed to save scene: " + str(error))
+    else:
+        printerr("Failed to pack scene: " + str(result))
+
+# C# static audit for Godot-specific pitfalls
+# params: { includePatterns?: ["cs"], maxFindingsPerFile?: int }
+# Checks: namespace usage, partial class, filename-class match, autoload mistakes
+func audit_scripts_cs(params: Dictionary) -> void:
+    # Implemented in module 'modules/audit_scripts_cs.gd'.
+    printerr("audit_scripts_cs module not inlined; ensure build concatenation step executed.")
+    var fallback_report = {
+        "namespaces": [],
+        "partials": [],
+        "filenames": [],
+        "autoloads": [],
+        "summary": {"error": "module_missing"},
+        "engine_version": Engine.get_version_info()
+    }
+    print(JSON.stringify(fallback_report))
+
+# Export preset validator
+# params: none required (project root assumed). Reads export_presets.cfg and project.godot
+# Output: presets array with name, platform, issues, warnings; summary counts
+func validate_export_presets(params: Dictionary) -> void:
+    # Implemented in module 'modules/validate_export_presets.gd'.
+    printerr("validate_export_presets module not inlined; ensure build concatenation step executed.")
+    var fallback_report = {
+        "presets": [],
+        "project_features": [],
+        "summary": {"error": "module_missing"},
+        "engine_version": Engine.get_version_info()
+    }
+    print(JSON.stringify(fallback_report))
+
+# Input Map auditor
+# Reports duplicate actions, duplicate events within an action, empty actions, heuristic deprecated event fields.
+# Output: actions array with events and issues; summary counts.
+func input_map_audit(params: Dictionary) -> void:
+    # Implemented in module 'modules/input_map_audit.gd'.
+    printerr("input_map_audit module not inlined; ensure build concatenation step executed.")
+    var fallback_report = {
+        "actions": [],
+        "summary": {"error": "module_missing"},
+        "engine_version": Engine.get_version_info()
+    }
+    print(JSON.stringify(fallback_report))
+
+# Physics layer/mask auditor
+# Scans .tscn files for nodes with physics body/area types and evaluates layer/mask usage.
+# Flags: layer==0, mask==0, identical layer & mask with only one bit, excessive bits (>8), no shared collision pairs, orphan layers used by no others.
+func physics_layer_audit(params: Dictionary) -> void:
+    # Implemented in module 'modules/physics_layer_audit.gd'.
+    printerr("physics_layer_audit module not inlined; ensure build concatenation step executed.")
+    var fallback_report = {
+        "bodies": [],
+        "summary": {"error": "module_missing"},
+        "engine_version": Engine.get_version_info()
+    }
+    print(JSON.stringify(fallback_report))
+
+# Audio bus layout auditor
+# Analyzes default_bus_layout.tres for common issues:
+#  - Missing file / empty layout
+#  - Only Master bus present (suggest adding category buses)
+#  - Missing recommended buses (Music, SFX, UI)
+#  - Positive gain (volume_db > 0) risking clipping
+#  - Invalid send targets or self-send
+#  - Orphan buses (not Master, never referenced by any send and no effects)
+#  - Disabled effects present / bypass_fx conflicts
+func audio_bus_layout_audit(params: Dictionary) -> void:
+    var start = Time.get_ticks_msec()
+    var layout_path := ProjectSettings.globalize_path("res://default_bus_layout.tres")
+    if not FileAccess.file_exists(layout_path):
+        var missing = {
+            "buses": [],
+            "global": {"issues": ["default_bus_layout.tres not found"], "warnings": []},
+            "summary": {"has_layout": false, "issues_total": 1, "warnings_total": 0, "duration_ms": Time.get_ticks_msec() - start},
+            "engine_version": Engine.get_version_info()
+        }
+        print(JSON.stringify(missing))
+        return
+
+    var text = FileAccess.get_file_as_string(layout_path)
+    if text.strip_edges() == "":
+        var empty = {
+            "buses": [],
+            "global": {"issues": ["default_bus_layout.tres is empty"], "warnings": []},
+            "summary": {"has_layout": true, "issues_total": 1, "warnings_total": 0, "duration_ms": Time.get_ticks_msec() - start},
+            "engine_version": Engine.get_version_info()
+        }
+        print(JSON.stringify(empty))
+        return
+
+    var lines = text.split("\n")
+    var bus_data := {} # index -> { name, volume_db, send, bypass_fx, effects: [], issues:[], warnings:[] }
+    var name_to_index := {}
+    var effect_re = RegEx.new(); effect_re.compile("^bus\\/(\\d+)\\/effects\\/(\\d+)\\/effect=")
+    var effect_enabled_re = RegEx.new(); effect_enabled_re.compile("^bus\\/(\\d+)\\/effects\\/(\\d+)\\/enabled=(.*)")
+    var name_re = RegEx.new(); name_re.compile("^bus\\/(\\d+)\\/name=\"(.*)\"")
+    var vol_re = RegEx.new(); vol_re.compile("^bus\\/(\\d+)\\/volume_db=([-0-9\.]+)")
+    var send_re = RegEx.new(); send_re.compile("^bus\\/(\\d+)\\/send=\"(.*)\"")
+    var bypass_re = RegEx.new(); bypass_re.compile("^bus\\/(\\d+)\\/bypass_fx=(.*)")
+
+    for l in lines:
+        l = l.strip_edges()
+        if l == "": continue
+        var m = name_re.search(l)
+        if m:
+            var idx = int(m.get_string(1))
+            var nm = m.get_string(2)
+            if not bus_data.has(idx):
+                bus_data[idx] = {"name": nm, "volume_db": 0.0, "send": "", "bypass_fx": false, "effects": [], "issues": [], "warnings": []}
+            else:
+                bus_data[idx].name = nm
+            name_to_index[nm] = idx
+            continue
+        m = vol_re.search(l)
+        if m:
+            var idx2 = int(m.get_string(1))
+            if not bus_data.has(idx2):
+                bus_data[idx2] = {"name": "", "volume_db": 0.0, "send": "", "bypass_fx": false, "effects": [], "issues": [], "warnings": []}
+            bus_data[idx2].volume_db = float(m.get_string(2))
+            continue
+        m = send_re.search(l)
+        if m:
+            var idx3 = int(m.get_string(1))
+            if not bus_data.has(idx3):
+                bus_data[idx3] = {"name": "", "volume_db": 0.0, "send": "", "bypass_fx": false, "effects": [], "issues": [], "warnings": []}
+            bus_data[idx3].send = m.get_string(2)
+            continue
+        m = bypass_re.search(l)
+        if m:
+            var idx4 = int(m.get_string(1))
+            if not bus_data.has(idx4):
+                bus_data[idx4] = {"name": "", "volume_db": 0.0, "send": "", "bypass_fx": false, "effects": [], "issues": [], "warnings": []}
+            bus_data[idx4].bypass_fx = (m.get_string(2).to_lower() == "true")
+            continue
+        m = effect_re.search(l)
+        if m:
+            var idx5 = int(m.get_string(1))
+            var eidx = int(m.get_string(2))
+            if not bus_data.has(idx5):
+                bus_data[idx5] = {"name": "", "volume_db": 0.0, "send": "", "bypass_fx": false, "effects": [], "issues": [], "warnings": []}
+            # store placeholder effect
+            bus_data[idx5].effects.append({"index": eidx, "path": l.substr(l.find("=") + 1).strip_edges().trim_prefix("\"").trim_suffix("\""), "enabled": true})
+            continue
+        m = effect_enabled_re.search(l)
+        if m:
+            var idx6 = int(m.get_string(1))
+            var eidx2 = int(m.get_string(2))
+            var enabled_val = m.get_string(3).strip_edges().to_lower() == "true"
+            if bus_data.has(idx6):
+                for eff in bus_data[idx6].effects:
+                    if eff.index == eidx2:
+                        eff.enabled = enabled_val
+                        break
+
+    # Convert to ordered array
+    var indices: Array = []
+    for k in bus_data.keys(): indices.append(k)
+    indices.sort()
+    var buses: Array = []
+    for i in indices:
+        buses.append(bus_data[i])
+
+    # Build reverse send references
+    var referenced := {}
+    for b in buses:
+        if b.send != "":
+            referenced[b.send] = referenced.get(b.send, 0) + 1
+
+    var recommended = ["Music", "SFX", "UI"]
+    var global_issues: Array = []
+    var global_warnings: Array = []
+
+    if buses.size() == 0:
+        global_issues.append("No buses parsed from layout (unexpected format)")
+    elif buses.size() == 1 and buses[0].name == "Master":
+        global_warnings.append("Only Master bus present; consider adding category buses (Music, SFX, UI)")
+
+    # Missing recommended
+    var existing_names := []
+    for b in buses: existing_names.append(b.name)
+    for rec in recommended:
+        if rec not in existing_names:
+            global_warnings.append("Recommended bus missing: " + rec)
+
+    # Per-bus analysis
+    for b in buses:
+        if b.volume_db > 0.0:
+            b.warnings.append("Positive gain (" + str(b.volume_db) + " dB) may cause clipping")
+        if b.send != "" and b.send not in existing_names:
+            b.issues.append("Send target not found: " + b.send)
+        if b.send == b.name and b.name != "":
+            b.issues.append("Bus sends to itself")
+        if b.name != "Master" and referenced.get(b.name, 0) == 0 and b.effects.size() == 0:
+            b.warnings.append("Orphan bus (never referenced, no effects)")
+        var disabled_effects = 0
+        for eff in b.effects:
+            if not eff.enabled:
+                disabled_effects += 1
+        if disabled_effects > 0:
+            b.warnings.append(str(disabled_effects) + " disabled effect(s) present")
+        if b.bypass_fx and b.effects.size() > 0:
+            b.warnings.append("bypass_fx=true disables all effects")
+
+    var issues_total = 0
+    var warnings_total = 0
+    for b in buses:
+        issues_total += b.issues.size()
+        warnings_total += b.warnings.size()
+    issues_total += global_issues.size()
+    warnings_total += global_warnings.size()
+
+    var report = {
+        "buses": buses,
+        "global": {"issues": global_issues, "warnings": global_warnings},
+        "summary": {
+            "has_layout": true,
+            "bus_count": buses.size(),
+            "issues_total": issues_total,
+            "warnings_total": warnings_total,
+            "duration_ms": Time.get_ticks_msec() - start
+        },
+        "engine_version": Engine.get_version_info()
+    }
+    print(JSON.stringify(report))
+
+# --- Dispatcher (appended for modular operations) ---
+# If a higher-level dispatcher already exists in the concatenated build output, this
+# block will be ignored because it appears earlier. In the source version we add it
+# here to guarantee a match-based router for standalone module testing.
+func dispatch_operation(op: String, params: Dictionary) -> void:
+    match op:
+        "animation_resource_audit":
+            animation_resource_audit(params)
+        _:
+            # No-op fallback; real dispatcher may exist earlier in concatenated build.
+            pass
+
+# Placeholder for animation_resource_audit (real implementation lives in modules/animation_resource_audit.gd)
+func animation_resource_audit(params: Dictionary) -> void:
+    printerr("animation_resource_audit module not inlined; ensure build concatenation step executed.")
+    var out := {
+        "summary": {"issues": 0, "warnings": 0, "notes": 0, "duration_ms": 0, "placeholder": true},
+        "categories": {
+            "missing_tracks": [],
+            "zero_length": [],
+            "unlooped_candidate": [],
+            "duplicate_names": []
+        },
+        "meta": {"tool": "animation_resource_audit", "engine_version": Engine.get_version_info()["string"]}
+    }
+    print(JSON.stringify(out))

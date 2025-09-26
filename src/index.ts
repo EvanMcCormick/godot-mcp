@@ -140,7 +140,7 @@ class GodotServer {
     this.server = new Server(
       {
         name: 'godot-mcp',
-        version: '0.1.0',
+        version: '0.2.0',
       },
       {
         capabilities: {
@@ -300,8 +300,10 @@ class GodotServer {
       possiblePaths.push(
         '/Applications/Godot.app/Contents/MacOS/Godot',
         '/Applications/Godot_4.app/Contents/MacOS/Godot',
+        '/Applications/Godot_4.5.app/Contents/MacOS/Godot',
         `${process.env.HOME}/Applications/Godot.app/Contents/MacOS/Godot`,
         `${process.env.HOME}/Applications/Godot_4.app/Contents/MacOS/Godot`,
+        `${process.env.HOME}/Applications/Godot_4.5.app/Contents/MacOS/Godot`,
         `${process.env.HOME}/Library/Application Support/Steam/steamapps/common/Godot Engine/Godot.app/Contents/MacOS/Godot`
       );
     } else if (osPlatform === 'win32') {
@@ -310,6 +312,8 @@ class GodotServer {
         'C:\\Program Files (x86)\\Godot\\Godot.exe',
         'C:\\Program Files\\Godot_4\\Godot.exe',
         'C:\\Program Files (x86)\\Godot_4\\Godot.exe',
+        'C:\\Program Files\\Godot_4.5\\Godot.exe',
+        'C:\\Program Files (x86)\\Godot_4.5\\Godot.exe',
         `${process.env.USERPROFILE}\\Godot\\Godot.exe`
       );
     } else if (osPlatform === 'linux') {
@@ -402,6 +406,21 @@ class GodotServer {
       const major = parseInt(match[1], 10);
       const minor = parseInt(match[2], 10);
       return major > 4 || (major === 4 && minor >= 4);
+    }
+    return false;
+  }
+
+  /**
+   * Check if the Godot version is 4.5 or later
+   * @param version The Godot version string
+   * @returns True if the version is 4.5 or later
+   */
+  private isGodot45OrLater(version: string): boolean {
+    const match = version.match(/^(\d+)\.(\d+)/);
+    if (match) {
+      const major = parseInt(match[1], 10);
+      const minor = parseInt(match[2], 10);
+      return major > 4 || (major === 4 && minor >= 5);
     }
     return false;
   }
@@ -924,6 +943,254 @@ class GodotServer {
             required: ['projectPath'],
           },
         },
+        {
+          name: 'duplicate_resource_advanced',
+          description: 'Duplicate a resource with advanced options using Godot 4.5+ duplicate_deep() methods',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: {
+                type: 'string',
+                description: 'Path to the Godot project directory',
+              },
+              resourcePath: {
+                type: 'string',
+                description: 'Path to the resource file to duplicate (relative to project)',
+              },
+              outputPath: {
+                type: 'string',
+                description: 'Optional: Path where the duplicated resource will be saved (relative to project). If omitted, generates a default path.',
+              },
+              useDeepDuplication: {
+                type: 'boolean',
+                description: 'Whether to use deep duplication (default: false)',
+                default: false,
+              },
+              duplicateExternalResources: {
+                type: 'boolean',
+                description: 'Whether to duplicate external resources (requires useDeepDuplication=true, uses RESOURCE_DEEP_DUPLICATE_ALL in Godot 4.5+)',
+                default: false,
+              },
+            },
+            required: ['projectPath', 'resourcePath'],
+          },
+        },
+        {
+          name: 'configure_tilemap_layer',
+          description: 'Configure TileMapLayer properties including Godot 4.5+ physics chunking options',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: {
+                type: 'string',
+                description: 'Path to the Godot project directory',
+              },
+              scenePath: {
+                type: 'string',
+                description: 'Path to the scene file (relative to project)',
+              },
+              tileMapLayerPath: {
+                type: 'string',
+                description: 'Path to the TileMapLayer node (e.g., "root/TileMap/TileMapLayer")',
+              },
+              physicsQuadrantSize: {
+                type: 'integer',
+                description: 'Physics quadrant size for chunking (Godot 4.5+). Set to 1 to disable chunking for precise coordinates. Default is 16.',
+                default: 16,
+              },
+              renderingQuadrantSize: {
+                type: 'integer',
+                description: 'Rendering quadrant size for performance optimization. Default is 16.',
+                default: 16,
+              },
+              collisionEnabled: {
+                type: 'boolean',
+                description: 'Whether collision is enabled for this layer',
+                default: true,
+              },
+              navigationEnabled: {
+                type: 'boolean',
+                description: 'Whether navigation is enabled for this layer',
+                default: false,
+              },
+            },
+            required: ['projectPath', 'scenePath', 'tileMapLayerPath'],
+          },
+        },
+        {
+          name: 'create_foldable_container',
+          description: 'Create a FoldableContainer UI node (Godot 4.5+ feature) that allows collapsible content sections',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: {
+                type: 'string',
+                description: 'Path to the Godot project directory',
+              },
+              scenePath: {
+                type: 'string',
+                description: 'Path to the scene file (relative to project)',
+              },
+              nodeName: {
+                type: 'string',
+                description: 'Name for the FoldableContainer node',
+              },
+              parentNodePath: {
+                type: 'string',
+                description: 'Path to the parent node (e.g., "root" or "root/UI")',
+                default: 'root',
+              },
+              title: {
+                type: 'string',
+                description: 'Title text displayed on the foldable header',
+                default: 'Foldable Section',
+              },
+              folded: {
+                type: 'boolean',
+                description: 'Whether the container starts folded/collapsed',
+                default: false,
+              },
+              toggleMode: {
+                type: 'boolean',
+                description: 'Whether clicking the header toggles the fold state',
+                default: true,
+              },
+            },
+            required: ['projectPath', 'scenePath', 'nodeName'],
+          },
+        },
+        {
+          name: 'configure_navigation_async',
+          description: 'Configure NavigationServer asynchronous region updates (Godot 4.5+ performance feature)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: {
+                type: 'string',
+                description: 'Path to the Godot project directory',
+              },
+              enableAsyncRegionUpdates: {
+                type: 'boolean',
+                description: 'Enable asynchronous navigation region updates for better performance (default: true in Godot 4.5+)',
+                default: true,
+              },
+              mergeRasterizerCellScale: {
+                type: 'number',
+                description: 'Navigation mesh merge rasterizer cell scale (0.01 to 1.0, default: 0.25). Lower values increase detail but reduce performance.',
+                default: 0.25,
+              },
+              applyToProject: {
+                type: 'boolean',
+                description: 'Apply settings to project.godot file (persistent across sessions)',
+                default: true,
+              },
+            },
+            required: ['projectPath'],
+          },
+        },
+        {
+          name: 'audit_migration_45',
+          description: 'Scan the Godot project for patterns needing attention when migrating from 4.4 to 4.5 (duplicate(true), get_rpc_config, RichText size_in_percent, navigation async settings, tilemap quadrant sizing). Returns categorized JSON findings with remediation suggestions.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: {
+                type: 'string',
+                description: 'Path to the Godot project directory'
+              },
+              includePatterns: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'File extensions (without dot) to include, e.g. ["gd","tscn"]. Default covers gd, tscn, tres, cs, cfg.'
+              }
+            },
+            required: ['projectPath']
+          }
+        },
+        {
+          name: 'audit_scripts_gd',
+          description: 'Static analysis of GDScript files: class_name/filename mismatch, undocumented signals, load() vs preload(), TODO/FIXME markers, basic deprecated pattern heuristics.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: { type: 'string', description: 'Path to the Godot project directory' },
+              includePatterns: { type: 'array', items: { type: 'string' }, description: 'Extensions to include (default: ["gd"])' },
+              maxFindingsPerFile: { type: 'number', description: 'Limit findings per file (default 10)' }
+            },
+            required: ['projectPath']
+          }
+        },
+        {
+          name: 'audit_scripts_cs',
+          description: 'Static analysis of Godot C# scripts: namespace usage, missing partial keyword, filename/class mismatches, autoload misconfiguration (.cs referenced directly).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: { type: 'string', description: 'Path to the Godot project directory' },
+              includePatterns: { type: 'array', items: { type: 'string' }, description: 'Extensions to include (default: ["cs"])' },
+              maxFindingsPerFile: { type: 'number', description: 'Limit findings per file (default 10)' }
+            },
+            required: ['projectPath']
+          }
+        },
+        {
+          name: 'scene_smoke_test',
+          description: 'Load (and optionally instantiate) every .tscn scene to detect load or instantiation failures and missing external resource dependencies.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: { type: 'string', description: 'Path to the Godot project directory' },
+              includePatterns: { type: 'array', items: { type: 'string' }, description: 'Extensions to include (default: ["tscn"])' },
+              instantiate: { type: 'boolean', description: 'Instantiate after load to catch runtime constructor issues (default false)' },
+              maxScenes: { type: 'number', description: 'Upper limit of scenes to test (default 500)' }
+            },
+            required: ['projectPath']
+          }
+        },
+        {
+          name: 'validate_export_presets',
+          description: 'Validate export_presets.cfg for each preset: required paths, platform conventions, Android signing fields, C#/.NET feature alignment, icon existence.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: { type: 'string', description: 'Path to the Godot project directory' }
+            },
+            required: ['projectPath']
+          }
+        },
+        {
+          name: 'input_map_audit',
+          description: 'Analyze InputMap in project.godot: duplicate actions, empty actions, duplicate events, legacy patterns.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: { type: 'string', description: 'Path to the Godot project directory' }
+            },
+            required: ['projectPath']
+          }
+        },
+        {
+          name: 'physics_layer_audit',
+          description: 'Scan scenes for physics bodies/areas and report collision layer/mask issues (zero layers, zero masks, redundant single-bit, excessive bits, orphan bits).',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: { type: 'string', description: 'Path to the Godot project directory' }
+            },
+            required: ['projectPath']
+          }
+        },
+        {
+          name: 'audio_bus_layout_audit',
+          description: 'Inspect default_bus_layout.tres for audio mix issues: missing layout, only Master bus, missing Music/SFX/UI, clipping risk (positive dB), invalid sends, orphan buses, disabled effects.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              projectPath: { type: 'string', description: 'Path to the Godot project directory' }
+            },
+            required: ['projectPath']
+          }
+        },
       ],
     }));
 
@@ -959,6 +1226,30 @@ class GodotServer {
           return await this.handleGetUid(request.params.arguments);
         case 'update_project_uids':
           return await this.handleUpdateProjectUids(request.params.arguments);
+        case 'duplicate_resource_advanced':
+          return await this.handleDuplicateResourceAdvanced(request.params.arguments);
+        case 'configure_tilemap_layer':
+          return await this.handleConfigureTileMapLayer(request.params.arguments);
+        case 'create_foldable_container':
+          return await this.handleCreateFoldableContainer(request.params.arguments);
+        case 'configure_navigation_async':
+          return await this.handleConfigureNavigationAsync(request.params.arguments);
+        case 'audit_migration_45':
+          return await this.handleAuditMigration45(request.params.arguments);
+        case 'audit_scripts_gd':
+          return await this.handleAuditScriptsGd(request.params.arguments);
+        case 'audit_scripts_cs':
+          return await this.handleAuditScriptsCs(request.params.arguments);
+        case 'scene_smoke_test':
+          return await this.handleSceneSmokeTest(request.params.arguments);
+        case 'validate_export_presets':
+          return await this.handleValidateExportPresets(request.params.arguments);
+        case 'input_map_audit':
+          return await this.handleInputMapAudit(request.params.arguments);
+        case 'physics_layer_audit':
+          return await this.handlePhysicsLayerAudit(request.params.arguments);
+        case 'audio_bus_layout_audit':
+          return await this.handleAudioBusLayoutAudit(request.params.arguments);
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,
@@ -2152,6 +2443,801 @@ class GodotServer {
         ]
       );
     }
+  }
+
+  /**
+   * Handle the duplicate_resource_advanced tool
+   * @param args Tool arguments
+   */
+  private async handleDuplicateResourceAdvanced(args: any) {
+    // Normalize parameters to camelCase
+    args = this.normalizeParameters(args);
+    
+    if (!args.projectPath || !args.resourcePath) {
+      return this.createErrorResponse(
+        'Missing required parameters',
+        ['Provide projectPath and resourcePath']
+      );
+    }
+
+    if (!this.validatePath(args.projectPath) || !this.validatePath(args.resourcePath)) {
+      return this.createErrorResponse(
+        'Invalid path',
+        ['Provide valid paths without ".." or other potentially unsafe characters']
+      );
+    }
+
+    // Validate outputPath if provided
+    if (args.outputPath && !this.validatePath(args.outputPath)) {
+      return this.createErrorResponse(
+        'Invalid output path',
+        ['Provide a valid output path without ".." or other potentially unsafe characters']
+      );
+    }
+
+    try {
+      // Check if the project directory exists and contains a project.godot file
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(
+          `Not a valid Godot project: ${args.projectPath}`,
+          [
+            'Ensure the path points to a directory containing a project.godot file',
+            'Use list_projects to find valid Godot projects',
+          ]
+        );
+      }
+
+      // Check if the resource file exists
+      const resourcePath = join(args.projectPath, args.resourcePath);
+      if (!existsSync(resourcePath)) {
+        return this.createErrorResponse(
+          `Resource file does not exist: ${args.resourcePath}`,
+          [
+            'Ensure the resource path is correct',
+            'Check if the resource file exists in the project',
+          ]
+        );
+      }
+
+      // Get Godot version to check for 4.5+ features
+      const { stdout: version } = await this.executeGetGodotVersion();
+      const isGodot45Plus = this.isGodot45OrLater(version.trim());
+      
+      if (args.duplicateExternalResources && !isGodot45Plus) {
+        return this.createErrorResponse(
+          `External resource duplication requires Godot 4.5+. Current version: ${version.trim()}`,
+          [
+            'Upgrade to Godot 4.5 or later to use RESOURCE_DEEP_DUPLICATE_ALL',
+            'Set duplicateExternalResources to false for Godot 4.4',
+          ]
+        );
+      }
+
+      // Prepare parameters for the operation (already in camelCase)
+      const params: any = {
+        resourcePath: args.resourcePath,
+      };
+
+      // Add optional parameters
+      if (args.outputPath) {
+        params.outputPath = args.outputPath;
+      }
+      
+      if (args.useDeepDuplication) {
+        params.useDeepDuplication = args.useDeepDuplication;
+      }
+      
+      if (args.duplicateExternalResources) {
+        params.duplicateExternalResources = args.duplicateExternalResources;
+      }
+
+      // Execute the operation
+      const { stdout, stderr } = await this.executeOperation('duplicate_resource_advanced', params, args.projectPath);
+
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(
+          `Failed to duplicate resource: ${stderr}`,
+          [
+            'Check if the resource file is valid',
+            'Ensure you have write permissions to the output path',
+            'Verify the resource can be properly loaded',
+          ]
+        );
+      }
+
+      const operationType = args.duplicateExternalResources 
+        ? 'deep duplication with external resources (Godot 4.5+)' 
+        : args.useDeepDuplication 
+          ? 'deep duplication' 
+          : 'standard duplication';
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Resource duplicated successfully using ${operationType}\n\nOutput: ${stdout}`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return this.createErrorResponse(
+        `Failed to duplicate resource: ${error?.message || 'Unknown error'}`,
+        [
+          'Ensure Godot is installed correctly',
+          'Check if the GODOT_PATH environment variable is set correctly',
+          'Verify the project path is accessible',
+        ]
+      );
+    }
+  }
+
+  /**
+   * Handle the configure_tilemap_layer tool
+   * @param args Tool arguments
+   */
+  private async handleConfigureTileMapLayer(args: any) {
+    // Normalize parameters to camelCase
+    args = this.normalizeParameters(args);
+    
+    if (!args.projectPath || !args.scenePath || !args.tileMapLayerPath) {
+      return this.createErrorResponse(
+        'Missing required parameters',
+        ['Provide projectPath, scenePath, and tileMapLayerPath']
+      );
+    }
+
+    if (!this.validatePath(args.projectPath) || !this.validatePath(args.scenePath) || !this.validatePath(args.tileMapLayerPath)) {
+      return this.createErrorResponse(
+        'Invalid path',
+        ['Provide valid paths without ".." or other potentially unsafe characters']
+      );
+    }
+
+    try {
+      // Check if the project directory exists and contains a project.godot file
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(
+          `Not a valid Godot project: ${args.projectPath}`,
+          [
+            'Ensure the path points to a directory containing a project.godot file',
+            'Use list_projects to find valid Godot projects',
+          ]
+        );
+      }
+
+      // Check if the scene file exists
+      const scenePath = join(args.projectPath, args.scenePath);
+      if (!existsSync(scenePath)) {
+        return this.createErrorResponse(
+          `Scene file does not exist: ${args.scenePath}`,
+          [
+            'Ensure the scene path is correct',
+            'Check if the scene file exists in the project',
+          ]
+        );
+      }
+
+      // Get Godot version to provide appropriate warnings about 4.5+ features
+      let version = '';
+      let isGodot45Plus = false;
+      try {
+        const { stdout } = await this.executeGetGodotVersion();
+        version = stdout.trim();
+        isGodot45Plus = this.isGodot45OrLater(version);
+      } catch (error) {
+        // Version detection failed, continue but note this in response
+        version = 'unknown';
+      }
+
+      // Prepare parameters for the operation (already in camelCase)
+      const params: any = {
+        scenePath: args.scenePath,
+        tileMapLayerPath: args.tileMapLayerPath,
+      };
+
+      // Add optional parameters
+      if (args.physicsQuadrantSize !== undefined) {
+        params.physicsQuadrantSize = args.physicsQuadrantSize;
+      }
+      
+      if (args.renderingQuadrantSize !== undefined) {
+        params.renderingQuadrantSize = args.renderingQuadrantSize;
+      }
+      
+      if (args.collisionEnabled !== undefined) {
+        params.collisionEnabled = args.collisionEnabled;
+      }
+      
+      if (args.navigationEnabled !== undefined) {
+        params.navigationEnabled = args.navigationEnabled;
+      }
+
+      // Execute the operation
+      const { stdout, stderr } = await this.executeOperation('configure_tilemap_layer', params, args.projectPath);
+
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(
+          `Failed to configure TileMapLayer: ${stderr}`,
+          [
+            'Check if the TileMapLayer node exists at the specified path',
+            'Ensure the scene file is valid and accessible',
+            'Verify you have write permissions to save the scene',
+          ]
+        );
+      }
+
+      let versionNote = '';
+      if (!isGodot45Plus) {
+        versionNote = ` Note: Some advanced features like physics_quadrant_size require Godot 4.5+. Current version: ${version}`;
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `TileMapLayer configured successfully!\n\nOutput: ${stdout}${versionNote}`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return this.createErrorResponse(
+        `Failed to configure TileMapLayer: ${error?.message || 'Unknown error'}`,
+        [
+          'Ensure Godot is installed correctly',
+          'Check if the GODOT_PATH environment variable is set correctly',
+          'Verify the project path is accessible',
+        ]
+      );
+    }
+  }
+
+  /**
+   * Handle the create_foldable_container tool
+   * @param args Tool arguments
+   */
+  private async handleCreateFoldableContainer(args: any) {
+    // Normalize parameters to camelCase
+    args = this.normalizeParameters(args);
+    
+    if (!args.projectPath || !args.scenePath || !args.nodeName) {
+      return this.createErrorResponse(
+        'Missing required parameters',
+        ['Provide projectPath, scenePath, and nodeName']
+      );
+    }
+
+    if (!this.validatePath(args.projectPath) || !this.validatePath(args.scenePath)) {
+      return this.createErrorResponse(
+        'Invalid path',
+        ['Provide valid paths without ".." or other potentially unsafe characters']
+      );
+    }
+
+    try {
+      // Check if the project directory exists and contains a project.godot file
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(
+          `Not a valid Godot project: ${args.projectPath}`,
+          [
+            'Ensure the path points to a directory containing a project.godot file',
+            'Use list_projects to find valid Godot projects',
+          ]
+        );
+      }
+
+      // Check if the scene file exists
+      const scenePath = join(args.projectPath, args.scenePath);
+      if (!existsSync(scenePath)) {
+        return this.createErrorResponse(
+          `Scene file does not exist: ${args.scenePath}`,
+          [
+            'Ensure the scene path is correct',
+            'Check if the scene file exists in the project',
+          ]
+        );
+      }
+
+      // Get Godot version to check for 4.5+ features
+      let version = '';
+      let isGodot45Plus = false;
+      try {
+        const { stdout } = await this.executeGetGodotVersion();
+        version = stdout.trim();
+        isGodot45Plus = this.isGodot45OrLater(version);
+      } catch (error) {
+        // Version detection failed, continue but note this in response
+        version = 'unknown';
+      }
+
+      // Warn if using older Godot version
+      if (!isGodot45Plus) {
+        return this.createErrorResponse(
+          `FoldableContainer requires Godot 4.5+. Current version: ${version}`,
+          [
+            'Upgrade to Godot 4.5 or later to use FoldableContainer',
+            'Consider using a regular Container with custom folding behavior for older versions',
+          ]
+        );
+      }
+
+      // Prepare parameters for the operation (already in camelCase)
+      const params: any = {
+        scenePath: args.scenePath,
+        nodeName: args.nodeName,
+      };
+
+      // Add optional parameters
+      if (args.parentNodePath) {
+        params.parentNodePath = args.parentNodePath;
+      }
+      
+      if (args.title) {
+        params.title = args.title;
+      }
+      
+      if (args.folded !== undefined) {
+        params.folded = args.folded;
+      }
+      
+      if (args.toggleMode !== undefined) {
+        params.toggleMode = args.toggleMode;
+      }
+
+      // Execute the operation
+      const { stdout, stderr } = await this.executeOperation('create_foldable_container', params, args.projectPath);
+
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(
+          `Failed to create FoldableContainer: ${stderr}`,
+          [
+            'Check if the parent node exists at the specified path',
+            'Ensure the scene file is valid and accessible',
+            'Verify you have write permissions to save the scene',
+          ]
+        );
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `FoldableContainer created successfully!\n\nOutput: ${stdout}`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return this.createErrorResponse(
+        `Failed to create FoldableContainer: ${error?.message || 'Unknown error'}`,
+        [
+          'Ensure Godot is installed correctly',
+          'Check if the GODOT_PATH environment variable is set correctly',
+          'Verify the project path is accessible',
+        ]
+      );
+    }
+  }
+
+  /**
+   * Handle the configure_navigation_async tool
+   * @param args Tool arguments
+   */
+  private async handleConfigureNavigationAsync(args: any) {
+    // Normalize parameters to camelCase
+    args = this.normalizeParameters(args);
+    
+    if (!args.projectPath) {
+      return this.createErrorResponse(
+        'Missing required parameters',
+        ['Provide projectPath']
+      );
+    }
+
+    if (!this.validatePath(args.projectPath)) {
+      return this.createErrorResponse(
+        'Invalid path',
+        ['Provide valid paths without ".." or other potentially unsafe characters']
+      );
+    }
+
+    try {
+      // Check if the project directory exists and contains a project.godot file
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(
+          `Not a valid Godot project: ${args.projectPath}`,
+          [
+            'Ensure the path points to a directory containing a project.godot file',
+            'Use list_projects to find valid Godot projects',
+          ]
+        );
+      }
+
+      // Get Godot version to check for 4.5+ features
+      let version = '';
+      let isGodot45Plus = false;
+      try {
+        const { stdout } = await this.executeGetGodotVersion();
+        version = stdout.trim();
+        isGodot45Plus = this.isGodot45OrLater(version);
+      } catch (error) {
+        // Version detection failed, continue but note this in response
+        version = 'unknown';
+      }
+
+      // Warn about version compatibility
+      let versionWarning = '';
+      if (!isGodot45Plus) {
+        versionWarning = ` Note: Asynchronous navigation updates are optimized for Godot 4.5+. Current version: ${version}`;
+      }
+
+      // Validate cell scale parameter
+      if (args.mergeRasterizerCellScale !== undefined) {
+        const cellScale = parseFloat(args.mergeRasterizerCellScale);
+        if (isNaN(cellScale) || cellScale < 0.01 || cellScale > 1.0) {
+          return this.createErrorResponse(
+            'Invalid mergeRasterizerCellScale value',
+            ['Cell scale must be between 0.01 and 1.0']
+          );
+        }
+      }
+
+      // Prepare parameters for the operation (already in camelCase)
+      const params: any = {};
+
+      // Add optional parameters
+      if (args.enableAsyncRegionUpdates !== undefined) {
+        params.enableAsyncRegionUpdates = args.enableAsyncRegionUpdates;
+      }
+      
+      if (args.mergeRasterizerCellScale !== undefined) {
+        params.mergeRasterizerCellScale = args.mergeRasterizerCellScale;
+      }
+      
+      if (args.applyToProject !== undefined) {
+        params.applyToProject = args.applyToProject;
+      }
+
+      // Execute the operation
+      const { stdout, stderr } = await this.executeOperation('configure_navigation_async', params, args.projectPath);
+
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(
+          `Failed to configure NavigationServer: ${stderr}`,
+          [
+            'Check if the project supports NavigationServer configuration',
+            'Ensure you have write permissions to save project settings',
+            'Verify the project.godot file is accessible',
+          ]
+        );
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `NavigationServer configured successfully!\n\nOutput: ${stdout}${versionWarning}`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      return this.createErrorResponse(
+        `Failed to configure NavigationServer: ${error?.message || 'Unknown error'}`,
+        [
+          'Ensure Godot is installed correctly',
+          'Check if the GODOT_PATH environment variable is set correctly',
+          'Verify the project path is accessible',
+        ]
+      );
+    }
+  }
+
+  /**
+   * Handle the audit_migration_45 tool
+   * @param args Tool arguments
+   */
+  private async handleAuditMigration45(args: any) {
+    // Normalize parameters to camelCase
+    args = this.normalizeParameters(args);
+
+    if (!args.projectPath) {
+      return this.createErrorResponse(
+        'Missing required parameters',
+        ['Provide projectPath']
+      );
+    }
+
+    if (!this.validatePath(args.projectPath)) {
+      return this.createErrorResponse(
+        'Invalid path',
+        ['Provide valid projectPath without ".." or other unsafe characters']
+      );
+    }
+
+    try {
+      // Check if the project directory exists and contains a project.godot file
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(
+          `Not a valid Godot project: ${args.projectPath}`,
+          [
+            'Ensure the path points to a directory containing a project.godot file',
+            'Use list_projects to find valid Godot projects',
+          ]
+        );
+      }
+
+      // Prepare parameters
+      const params: any = {};
+      if (args.includePatterns) params.includePatterns = args.includePatterns;
+
+      const { stdout, stderr } = await this.executeOperation('audit_migration_45', params, args.projectPath);
+
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(
+          `Failed to audit project: ${stderr}`,
+          [
+            'Verify files are readable',
+            'Ensure the project directory is accessible',
+          ]
+        );
+      }
+
+      // stdout is expected to be JSON from the Godot script
+      let parsed: any = null;
+      try {
+        parsed = JSON.parse(stdout.trim());
+      } catch (_e) {
+        // If parsing fails, still return raw output
+        parsed = { raw: stdout.trim(), parse_error: 'Failed to parse JSON output from audit script' };
+      }
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(parsed, null, 2)
+          }
+        ]
+      };
+    } catch (error: any) {
+      return this.createErrorResponse(
+        `Failed to run migration audit: ${error?.message || 'Unknown error'}`,
+        [
+          'Ensure Godot is installed correctly',
+          'Check if the GODOT_PATH environment variable is set correctly',
+          'Verify the project path is accessible'
+        ]
+      );
+    }
+  }
+
+  /**
+   * Handle the audit_scripts_gd tool
+   */
+  private async handleAuditScriptsGd(args: any) {
+    args = this.normalizeParameters(args);
+    if (!args.projectPath) {
+      return this.createErrorResponse('Missing required parameters', ['Provide projectPath']);
+    }
+    if (!this.validatePath(args.projectPath)) {
+      return this.createErrorResponse('Invalid path', ['Provide a safe projectPath']);
+    }
+    try {
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(`Not a valid Godot project: ${args.projectPath}`, ['Ensure project.godot exists']);
+      }
+      const params: any = {};
+      if (args.includePatterns) params.includePatterns = args.includePatterns;
+      if (args.maxFindingsPerFile !== undefined) params.maxFindingsPerFile = args.maxFindingsPerFile;
+      const { stdout, stderr } = await this.executeOperation('audit_scripts_gd', params, args.projectPath);
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(`Failed to audit GDScript: ${stderr}`, ['Check file permissions']);
+      }
+      let parsed: any;
+      try { parsed = JSON.parse(stdout.trim()); } catch { parsed = { raw: stdout.trim(), parse_error: 'JSON parse failed' }; }
+      return { content: [{ type: 'text', text: JSON.stringify(parsed, null, 2) }] };
+    } catch (error: any) {
+      return this.createErrorResponse(`Failed to run GDScript audit: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Handle the audit_scripts_cs tool
+   */
+  private async handleAuditScriptsCs(args: any) {
+    args = this.normalizeParameters(args);
+    if (!args.projectPath) {
+      return this.createErrorResponse('Missing required parameters', ['Provide projectPath']);
+    }
+    if (!this.validatePath(args.projectPath)) {
+      return this.createErrorResponse('Invalid path', ['Provide a safe projectPath']);
+    }
+    try {
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(`Not a valid Godot project: ${args.projectPath}`, ['Ensure project.godot exists']);
+      }
+      const params: any = {};
+      if (args.includePatterns) params.includePatterns = args.includePatterns;
+      if (args.maxFindingsPerFile !== undefined) params.maxFindingsPerFile = args.maxFindingsPerFile;
+      const { stdout, stderr } = await this.executeOperation('audit_scripts_cs', params, args.projectPath);
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(`Failed to audit C# scripts: ${stderr}`, ['Check file permissions']);
+      }
+      let parsed: any;
+      try { parsed = JSON.parse(stdout.trim()); } catch { parsed = { raw: stdout.trim(), parse_error: 'JSON parse failed' }; }
+      return { content: [{ type: 'text', text: JSON.stringify(parsed, null, 2) }] };
+    } catch (error: any) {
+      return this.createErrorResponse(`Failed to run C# script audit: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Handle the scene_smoke_test tool
+   */
+  private async handleSceneSmokeTest(args: any) {
+    args = this.normalizeParameters(args);
+    if (!args.projectPath) {
+      return this.createErrorResponse('Missing required parameters', ['Provide projectPath']);
+    }
+    if (!this.validatePath(args.projectPath)) {
+      return this.createErrorResponse('Invalid path', ['Provide a safe projectPath']);
+    }
+    try {
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(`Not a valid Godot project: ${args.projectPath}`, ['Ensure project.godot exists']);
+      }
+      const params: any = {};
+      if (args.includePatterns) params.includePatterns = args.includePatterns;
+      if (args.instantiate !== undefined) params.instantiate = args.instantiate;
+      if (args.maxScenes !== undefined) params.maxScenes = args.maxScenes;
+      const { stdout, stderr } = await this.executeOperation('scene_smoke_test', params, args.projectPath);
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(`Failed to execute scene smoke test: ${stderr}`);
+      }
+      let parsed: any;
+      try { parsed = JSON.parse(stdout.trim()); } catch { parsed = { raw: stdout.trim(), parse_error: 'JSON parse failed' }; }
+      return { content: [{ type: 'text', text: JSON.stringify(parsed, null, 2) }] };
+    } catch (error: any) {
+      return this.createErrorResponse(`Failed to run scene smoke test: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Handle the validate_export_presets tool
+   */
+  private async handleValidateExportPresets(args: any) {
+    args = this.normalizeParameters(args);
+    if (!args.projectPath) {
+      return this.createErrorResponse('Missing required parameters', ['Provide projectPath']);
+    }
+    if (!this.validatePath(args.projectPath)) {
+      return this.createErrorResponse('Invalid path', ['Provide a safe projectPath']);
+    }
+    try {
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(`Not a valid Godot project: ${args.projectPath}`, ['Ensure project.godot exists']);
+      }
+      const params: any = {}; // no extra params currently
+      const { stdout, stderr } = await this.executeOperation('validate_export_presets', params, args.projectPath);
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(`Failed to validate export presets: ${stderr}`);
+      }
+      let parsed: any;
+      try { parsed = JSON.parse(stdout.trim()); } catch { parsed = { raw: stdout.trim(), parse_error: 'JSON parse failed' }; }
+      return { content: [{ type: 'text', text: JSON.stringify(parsed, null, 2) }] };
+    } catch (error: any) {
+      return this.createErrorResponse(`Failed to run export preset validation: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Handle the input_map_audit tool
+   */
+  private async handleInputMapAudit(args: any) {
+    args = this.normalizeParameters(args);
+    if (!args.projectPath) {
+      return this.createErrorResponse('Missing required parameters', ['Provide projectPath']);
+    }
+    if (!this.validatePath(args.projectPath)) {
+      return this.createErrorResponse('Invalid path', ['Provide a safe projectPath']);
+    }
+    try {
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(`Not a valid Godot project: ${args.projectPath}`, ['Ensure project.godot exists']);
+      }
+      const params: any = {};
+      const { stdout, stderr } = await this.executeOperation('input_map_audit', params, args.projectPath);
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(`Failed to audit InputMap: ${stderr}`);
+      }
+      let parsed: any;
+      try { parsed = JSON.parse(stdout.trim()); } catch { parsed = { raw: stdout.trim(), parse_error: 'JSON parse failed' }; }
+      return { content: [{ type: 'text', text: JSON.stringify(parsed, null, 2) }] };
+    } catch (error: any) {
+      return this.createErrorResponse(`Failed to run InputMap audit: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Handle the physics_layer_audit tool
+   */
+  private async handlePhysicsLayerAudit(args: any) {
+    args = this.normalizeParameters(args);
+    if (!args.projectPath) {
+      return this.createErrorResponse('Missing required parameters', ['Provide projectPath']);
+    }
+    if (!this.validatePath(args.projectPath)) {
+      return this.createErrorResponse('Invalid path', ['Provide a safe projectPath']);
+    }
+    try {
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(`Not a valid Godot project: ${args.projectPath}`, ['Ensure project.godot exists']);
+      }
+      const params: any = {};
+      const { stdout, stderr } = await this.executeOperation('physics_layer_audit', params, args.projectPath);
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(`Failed to audit physics layers: ${stderr}`);
+      }
+      let parsed: any;
+      try { parsed = JSON.parse(stdout.trim()); } catch { parsed = { raw: stdout.trim(), parse_error: 'JSON parse failed' }; }
+      return { content: [{ type: 'text', text: JSON.stringify(parsed, null, 2) }] };
+    } catch (error: any) {
+      return this.createErrorResponse(`Failed to run physics layer audit: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Handle the audio_bus_layout_audit tool
+   */
+  private async handleAudioBusLayoutAudit(args: any) {
+    args = this.normalizeParameters(args);
+    if (!args.projectPath) {
+      return this.createErrorResponse('Missing required parameters', ['Provide projectPath']);
+    }
+    if (!this.validatePath(args.projectPath)) {
+      return this.createErrorResponse('Invalid path', ['Provide a safe projectPath']);
+    }
+    try {
+      const projectFile = join(args.projectPath, 'project.godot');
+      if (!existsSync(projectFile)) {
+        return this.createErrorResponse(`Not a valid Godot project: ${args.projectPath}`, ['Ensure project.godot exists']);
+      }
+      const params: any = {};
+      const { stdout, stderr } = await this.executeOperation('audio_bus_layout_audit', params, args.projectPath);
+      if (stderr && stderr.includes('Failed to')) {
+        return this.createErrorResponse(`Failed to audit audio bus layout: ${stderr}`);
+      }
+      let parsed: any;
+      try { parsed = JSON.parse(stdout.trim()); } catch { parsed = { raw: stdout.trim(), parse_error: 'JSON parse failed' }; }
+      return { content: [{ type: 'text', text: JSON.stringify(parsed, null, 2) }] };
+    } catch (error: any) {
+      return this.createErrorResponse(`Failed to run audio bus layout audit: ${error?.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Execute get Godot version (helper method)
+   */
+  private async executeGetGodotVersion(): Promise<{ stdout: string; stderr: string }> {
+    // Ensure godotPath is set
+    if (!this.godotPath) {
+      await this.detectGodotPath();
+      if (!this.godotPath) {
+        throw new Error('Could not find a valid Godot executable path');
+      }
+    }
+
+    const { stdout, stderr } = await execAsync(`"${this.godotPath}" --version`);
+    return { stdout, stderr };
   }
 
   /**
